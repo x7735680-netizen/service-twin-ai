@@ -1,0 +1,12 @@
+{
+  "hours": 3.0,
+  "arrival_rate_per_hour": 15.0,
+  "check_stations": 2,
+  "check_time_min": 12.0,
+  "transaction_time_min": 6.0,
+  "data_wipe_time_min": 8.0,
+  "has_entry_triage": true,
+  "has_waiting_content": true,
+  "has_price_explanation": true,
+  "has_data_security_visualization": true
+}

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: transparent;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow-x: hidden;
+    padding: 6px 0 8px 0;
+}
+
+/* -- Horizontal scroll container -- */
+#thumb-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0;
+    padding: 4px 2px 8px 2px;
+    min-height: 100px;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #b8b5ad transparent;
+}
+#thumb-row:empty::before {
+    content: "Loading moments...";
+    color: #6b7280;
+    font-size: 11px;
+    padding: 8px 4px;
+}
+#thumb-row::-webkit-scrollbar { height: 4px; }
+#thumb-row::-webkit-scrollbar-thumb {
+    background: #b8b5ad; border-radius: 2px;
+}
+
+/* -- Arrows -- */
+.arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #858b96;
+    font-size: 12px;
+    width: 22px;
+    flex-shrink: 0;
+    padding-top: 34px;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* -- Thumbnail card -- */
+.thumb {
+    width: 128px;
+    min-width: 128px;
+    min-height: 88px;
+    background: #ffffff;
+    border: 1px solid #e4e2dc;
+    border-radius: 12px;
+    padding: 12px 12px 22px 12px;
+    cursor: grab;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: #202431;
+    word-break: break-word;
+    line-height: 1.35;
+    position: relative;
+    user-select: none;
+    touch-action: none;
+    transition: box-shadow 0.12s, opacity 0.12s;
+}
+.thumb:active { cursor: grabbing; }
+.thumb.dragging { opacity: 0.75; z-index: 20; }
+.thumb.drag-over { box-shadow: 0 0 0 3px #3b8cea; background:#e8f1fb; }
+
+.risk-high   { border-top: 4px solid #171717; }
+.risk-medium { border-top: 4px solid #f0c85a; }
+.risk-low    { border-top: 4px solid #858b96; }
+.is-branch   { border-style: dashed; }
+
+.thumb-name {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    pointer-events: none;
+}
+.thumb-badge {
+    font-size: 9px;
+    color: #3b8cea;
+    margin-top: 3px;
+    pointer-events: none;
+}
+
+/* -- Action bar -- */
+#action-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.act-btn {
+    min-height: 36px;
+    padding: 6px 13px;
+    background: #ffffff;
+    border: 1px solid #b8b5ad;
+    border-radius: 10px;
+    color: #202431;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.act-btn:hover { border-color: #171717; color: #171717; background:#efefec; }
+
+#del-zone {
+    padding: 4px 12px;
+    min-height:36px;
+    padding:6px 12px;
+    border: 1px dashed #b8b5ad;
+    border-radius: 10px;
+    color: #858b96;
+    font-size: 12px;
+    transition: all 0.2s;
+    user-select: none;
+}
+#del-zone.armed {
+    border-color: #171717;
+    color: #171717;
+    background: #fff4c9;
+}
+#del-zone.hot { background: #f0c85a; }
+
+/* -- Branch panel -- */
+#branch-panel {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border:1px solid #e4e2dc;
+    border-left: 3px solid #3b8cea;
+    border-radius: 0 12px 12px 0;
+    font-size: 12px;
+    color: #5f6572;
+}
+#branch-after { font-weight: 600; color: #202431; }
+#branch-input {
+    display: block;
+    width: 200px;
+    margin: 7px 0;
+    background: #ffffff;
+    border: 1px solid #b8b5ad;
+    border-radius: 8px;
+    color: #202431;
+    padding: 7px 9px;
+    font-size: 12px;
+    font-family: inherit;
+}
+.pb {
+    padding: 3px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-right: 6px;
+    border: none;
+}
+.pb.ok { background: #202431; color: #fff; }
+.pb.cl {
+    background: transparent;
+    border: 1px solid #b8b5ad;
+    color: #5f6572;
+}
+</style>
+</head>
+<body>
+
+<div id="thumb-row"></div>
+
+<div id="action-bar">
+    <button class="act-btn" onclick="addMoment()">
+        + Add moment
+    </button>
+    <button class="act-btn" onclick="openBranchPanel()">
+        Add branch
+    </button>
+    <div id="del-zone">Drop here to delete</div>
+</div>
+
+<div id="branch-panel">
+    Add branch after:&nbsp;<span id="branch-after"></span>
+    <input id="branch-input" type="text" placeholder="Branch name">
+    <div style="margin-top:6px;">
+        <button class="pb ok" onclick="confirmBranch()">
+            Add branch
+        </button>
+        <button class="pb cl" onclick="closeBranch()">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script>
+// -- Streamlit communication --------------------------------
+function sendToStreamlit(data) {
+    window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setComponentValue",
+        value: data
+    }, "*");
+}
+
+function setFrameHeight() {
+    window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height: document.body.scrollHeight + 8
+    }, "*");
+}
+
+function componentReady() {
+    window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:componentReady",
+        apiVersion: 1
+    }, "*");
+    setFrameHeight();
+}
+
+// -- Receive initial Streamlit render data -------------------
+window.addEventListener("message", function(e) {
+    if (!e.data) return;
+
+    if (e.data.type === "streamlit:render") {
+        const args = e.data.args;
+        if (args && args.items) {
+            items = JSON.parse(args.items);
+            build();
+        }
+        componentReady();
+    }
+});
+
+componentReady();
+
+// -- Data -----------------------------------------------------
+const RCLS = {
+    high: 'risk-high',
+    medium: 'risk-medium',
+    low: 'risk-low'
+};
+
+let items = [];
+let dragState = null;
+let branchTarget = null;
+
+const thumbRow = document.getElementById('thumb-row');
+const delZone  = document.getElementById('del-zone');
+const bPanel   = document.getElementById('branch-panel');
+
+// -- Build horizontal row ------------------------------------
+function build() {
+    thumbRow.innerHTML = '';
+    items.forEach((item, idx) => {
+        if (idx > 0) {
+            const arr = document.createElement('div');
+            arr.className = 'arrow';
+            arr.textContent = '->';
+            thumbRow.appendChild(arr);
+        }
+        thumbRow.appendChild(makeThumb(item, idx));
+    });
+    setFrameHeight();
+}
+
+function makeThumb(item, idx) {
+    const d = document.createElement('div');
+    const riskCls = RCLS[item.risk] || 'risk-low';
+    const branchCls = item.is_branch ? ' is-branch' : '';
+    d.className = `thumb ${riskCls}${branchCls}`;
+    d.setAttribute('draggable', 'false');
+    d.dataset.idx = idx;
+    d.dataset.id  = item.id;
+
+    d.innerHTML =
+        '<div class="thumb-name">' + item.name + '</div>' +
+        (item.is_branch
+            ? '<div class="thumb-badge">branch</div>'
+            : '');
+
+    d.addEventListener('mousedown', e => startMouseDrag(e, d, idx));
+    return d;
+}
+
+// -- Mouse drag ----------------------------------------------
+function startMouseDrag(e, el, idx) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragState = {
+        idx: idx,
+        el: el,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false
+    };
+    el.classList.add('dragging');
+    delZone.classList.add('armed');
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('blur', cancelMouseDrag);
+}
+
+function onMouseMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 4) {
+        dragState.active = true;
+    }
+    dragState.el.style.transform = `translate(${dx}px, ${dy}px)`;
+    updateDropHints(e.clientX, e.clientY);
+}
+
+function onMouseUp(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    const sourceIdx = dragState.idx;
+    const shouldDelete = isOverDeleteZone(e.clientX, e.clientY);
+    let changed = false;
+
+    if (shouldDelete) {
+        items.splice(sourceIdx, 1);
+        changed = true;
+    } else {
+        const targetIdx = getDropIndex(e.clientX, e.clientY);
+        if (targetIdx !== null && targetIdx !== sourceIdx) {
+            const moved = items.splice(sourceIdx, 1)[0];
+            const insertIdx = targetIdx > sourceIdx ? targetIdx - 1 : targetIdx;
+            items.splice(insertIdx, 0, moved);
+            changed = true;
+        }
+    }
+
+    cleanupMouseDrag();
+    build();
+    if (changed) {
+        sendToStreamlit(JSON.stringify(items));
+    }
+}
+
+function cancelMouseDrag() {
+    cleanupMouseDrag();
+    build();
+}
+
+function cleanupMouseDrag() {
+    if (!dragState) return;
+    dragState.el.style.transform = '';
+    dragState.el.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    window.removeEventListener('blur', cancelMouseDrag);
+    dragState = null;
+    delZone.classList.remove('armed', 'hot');
+    document.querySelectorAll('.thumb.drag-over').forEach(el =>
+        el.classList.remove('drag-over'));
+}
+
+function isOverDeleteZone(x, y) {
+    const r = delZone.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function getThumbIndexAt(x, y) {
+    if (dragState) {
+        dragState.el.style.pointerEvents = 'none';
+    }
+    const found = document.elementsFromPoint(x, y)
+        .find(el => el.classList && el.classList.contains('thumb'));
+    if (dragState) {
+        dragState.el.style.pointerEvents = '';
+    }
+    if (!found) return null;
+    return Number(found.dataset.idx);
+}
+
+function getDropIndex(x, y) {
+    const thumbs = Array.from(document.querySelectorAll('.thumb'));
+    for (const el of thumbs) {
+        if (dragState && el === dragState.el) continue;
+        const r = el.getBoundingClientRect();
+        const mid = r.left + r.width / 2;
+        if (x < mid) {
+            return Number(el.dataset.idx);
+        }
+    }
+    return thumbs.length;
+}
+
+function updateDropHints(x, y) {
+    document.querySelectorAll('.thumb.drag-over').forEach(el =>
+        el.classList.remove('drag-over'));
+    if (isOverDeleteZone(x, y)) {
+        delZone.classList.add('hot');
+        return;
+    }
+    delZone.classList.remove('hot');
+    const idx = getDropIndex(x, y);
+    if (idx !== null && dragState && idx !== dragState.idx) {
+        const target = document.querySelector(`.thumb[data-idx="${idx}"]`);
+        if (target) target.classList.add('drag-over');
+    }
+}
+
+// -- Add moment ----------------------------------------------
+function addMoment() {
+    items.push({
+        id: 'new_' + Date.now(),
+        name: 'New moment',
+        risk: 'low',
+        is_branch: false
+    });
+    build();
+    sendToStreamlit(JSON.stringify(items));
+}
+
+// -- Branch ---------------------------------------------------
+function openBranchPanel() {
+    branchTarget = items.length > 0
+        ? items[items.length - 1].id
+        : null;
+    const it = items.find(i => i.id === branchTarget);
+    document.getElementById('branch-after').textContent =
+        it ? it.name : '(end)';
+    document.getElementById('branch-input').value = '';
+    bPanel.style.display = 'block';
+    setFrameHeight();
+}
+function closeBranch() {
+    bPanel.style.display = 'none';
+    branchTarget = null;
+    setFrameHeight();
+}
+function confirmBranch() {
+    const name =
+        document.getElementById('branch-input').value.trim();
+    if (!name) return;
+    const idx = branchTarget
+        ? items.findIndex(i => i.id === branchTarget)
+        : items.length - 1;
+    items.splice(idx + 1, 0, {
+        id: 'branch_' + Date.now(),
+        name: name + ' branch',
+        risk: 'low',
+        is_branch: true
+    });
+    closeBranch();
+    build();
+    sendToStreamlit(JSON.stringify(items));
+}
+</script>
+</body>
+</html>
