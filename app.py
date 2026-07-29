@@ -12,6 +12,8 @@ from src.experience_simulator import run_experience_simulation
 
 st.set_page_config(page_title="Service Twin AI v0.8 Sandbox", layout="wide")
 
+APP_BUILD = "2026-07-29-checkbox-fix-01"
+
 FEATURE_FLAGS = {
     "p1_viewport_switching": False,
     "p1_emotion_bubbles": False,
@@ -638,106 +640,6 @@ def apply_css():
           padding:0 !important;
           line-height:1.2 !important;
         }
-        [data-testid="stCheckbox"],
-        [data-testid="stCheckbox"] label,
-        [data-testid="stCheckbox"] label > div {
-          background:#ffffff !important;
-          color:var(--ink) !important;
-        }
-        [data-testid="stCheckbox"] label p,
-        [data-testid="stCheckbox"] label span {
-          color:var(--ink) !important;
-        }
-        [data-testid="stCheckbox"] label,
-        [data-baseweb="checkbox"] {
-          display:inline-flex !important;
-          align-items:center !important;
-          gap:12px !important;
-          line-height:1.2 !important;
-        }
-        [data-testid="stCheckbox"] label > input,
-        [data-baseweb="checkbox"] > input {
-          position:absolute !important;
-          width:1px !important;
-          height:1px !important;
-          margin:-1px !important;
-          padding:0 !important;
-          overflow:hidden !important;
-          clip:rect(0, 0, 0, 0) !important;
-          white-space:nowrap !important;
-          border:0 !important;
-        }
-        [data-testid="stCheckbox"] label > input + div,
-        [data-baseweb="checkbox"] > input + div,
-        [data-testid="stCheckbox"] label > input + div p,
-        [data-baseweb="checkbox"] > input + div p {
-          margin:0 !important;
-          padding:0 !important;
-          line-height:1.2 !important;
-          background:transparent !important;
-          color:var(--ink) !important;
-        }
-        [data-testid="stCheckbox"] label > span:first-child,
-        [data-baseweb="checkbox"] > span:first-child {
-          position:relative !important;
-          width:20px !important;
-          height:20px !important;
-          min-width:20px !important;
-          min-height:20px !important;
-          flex:0 0 20px !important;
-          box-sizing:border-box !important;
-          background:#ffffff !important;
-          border:1.5px solid #a8a8a8 !important;
-          border-radius:5px !important;
-          color:var(--ink) !important;
-          margin:0 !important;
-          padding:0 !important;
-          overflow:visible !important;
-          line-height:0 !important;
-          box-shadow:none !important;
-          transform:none !important;
-          top:auto !important;
-          right:auto !important;
-          bottom:auto !important;
-          left:auto !important;
-        }
-        [data-testid="stCheckbox"] label:has(input:checked) > span:first-child,
-        [data-baseweb="checkbox"]:has(input:checked) > span:first-child {
-          background:var(--ink) !important;
-          border-color:var(--ink) !important;
-          color:#ffffff !important;
-        }
-        [data-testid="stCheckbox"] label > span:first-child::after,
-        [data-baseweb="checkbox"] > span:first-child::after {
-          content:"" !important;
-          display:none !important;
-          position:absolute !important;
-          left:6px !important;
-          top:2px !important;
-          width:5px !important;
-          height:10px !important;
-          border:solid #ffffff !important;
-          border-width:0 2px 2px 0 !important;
-          transform:rotate(45deg) !important;
-          box-sizing:border-box !important;
-          pointer-events:none !important;
-        }
-        [data-testid="stCheckbox"] label:has(input:checked) > span:first-child::after,
-        [data-baseweb="checkbox"]:has(input:checked) > span:first-child::after {
-          display:block !important;
-        }
-        [data-testid="stCheckbox"] label:has(input:checked) > span:first-child svg,
-        [data-testid="stCheckbox"] label:has(input:checked) > span:first-child svg *,
-        [data-baseweb="checkbox"]:has(input:checked) > span:first-child svg,
-        [data-baseweb="checkbox"]:has(input:checked) > span:first-child svg * {
-          color:#ffffff !important;
-          fill:#ffffff !important;
-          stroke:#ffffff !important;
-          display:none !important;
-        }
-        [data-testid="stCheckbox"] label:has(input:focus-visible) > span:first-child {
-          outline:2px solid var(--ink) !important; outline-offset:3px !important;
-        }
         [data-testid="stRadio"] [data-baseweb="radio"]:has(input:focus-visible) > :first-child {
           outline:2px solid var(--ink) !important; outline-offset:3px !important;
         }
@@ -914,6 +816,31 @@ def apply_css():
           padding:16px 18px; border:1px solid #ece9e2; border-radius:12px; background:#fbfbf9;
         }
         [class*="st-key-moment_settings_"] > [data-testid="stVerticalBlock"] { gap:14px; }
+        [class*="st-key-step2_uncertain_"],
+        [class*="st-key-step2_impact_"],
+        [class*="st-key-step2_keep_"],
+        [class*="st-key-step2_uncertain_"] [data-testid="stCheckbox"],
+        [class*="st-key-step2_impact_"] [data-testid="stCheckbox"],
+        [class*="st-key-step2_keep_"] [data-testid="stCheckbox"],
+        [class*="st-key-step2_uncertain_"] label,
+        [class*="st-key-step2_impact_"] label,
+        [class*="st-key-step2_keep_"] label,
+        [class*="st-key-step2_uncertain_"] label > div,
+        [class*="st-key-step2_impact_"] label > div,
+        [class*="st-key-step2_keep_"] label > div,
+        [class*="st-key-step2_uncertain_"] label p,
+        [class*="st-key-step2_impact_"] label p,
+        [class*="st-key-step2_keep_"] label p {
+          background:transparent !important;
+          color:#202431 !important;
+        }
+        [class*="st-key-step2_uncertain_"] label,
+        [class*="st-key-step2_impact_"] label,
+        [class*="st-key-step2_keep_"] label {
+          display:inline-flex !important;
+          align-items:center !important;
+          gap:12px !important;
+        }
         [class*="st-key-moment_actions_"] { margin-top:20px; padding-top:20px; border-top:1px solid #ece9e2; }
         [class*="st-key-moment_actions_"] [data-testid="stExpander"] { background:#fbfbf9; }
         .badge.high { background:var(--critical-soft); color:var(--critical); }
@@ -2929,6 +2856,7 @@ def render_sidebar():
 init_state()
 apply_css()
 render_progress()
+st.caption(f"Build: {APP_BUILD} · Streamlit: {st.__version__}")
 
 if st.session_state["screen"] == "home":
     render_home()
